@@ -151,8 +151,8 @@ void matrix_scan_kb() {
             tb_info.y = data0.x;
 
             if (via_get_layout_options() == 1) {
-                tb_info.x = -tb_info.y;
-                tb_info.y = -tb_info.x;
+                tb_info.x = -tb_info.x;
+                tb_info.y = -tb_info.y;
             }
 
             tb_info.motion_flag = ((data0.stat & 0x08) == 0) ? 0x80 : 0;
@@ -170,7 +170,7 @@ void matrix_scan_kb() {
                 tb_info.y = scaled_y;
             }
 
-            if (cnt++ % 10 == 0) {
+            if (cnt++ % 10 == 0 || tb_info.motion_flag & 0x80) {
                 dprintf("%d %d %02x %d %d\n", tb_info.x, tb_info.y, data0.stat, data0.x, data0.y);
             }
 
