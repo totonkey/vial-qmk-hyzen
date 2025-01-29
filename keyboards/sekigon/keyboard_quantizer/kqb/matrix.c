@@ -7,6 +7,7 @@
 
 #include "quantum.h"
 
+#include "state_controller.h"
 #include "bmp_matrix.h"
 #include "apidef.h"
 #include "process_packet.h"
@@ -145,6 +146,7 @@ uint32_t qt_matrix_scan(matrix_row_t *matrix_raw) {
     }
 
     if (ch559_update_mode) {
+        bmp_set_enable_task_interval_stretch(false);
         return 0;
     }
 
