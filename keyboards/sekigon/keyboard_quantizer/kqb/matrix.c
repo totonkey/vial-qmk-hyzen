@@ -7,6 +7,7 @@
 
 #include "quantum.h"
 
+#include "state_controller.h"
 #include "bmp_matrix.h"
 #include "apidef.h"
 #include "process_packet.h"
@@ -61,7 +62,7 @@ void qt_spis_receive(uint16_t receive_len) {
     }
 
     if (receive_len > 4) {
-        led_on_count = 1;
+        led_on_count = 10;
     }
 
     // static int cnt;
@@ -116,7 +117,12 @@ void qt_matrix_init(void) {
 
     gpio_set_pin_input_high(BOOTPIN);
 
+    gpio_set_pin_input_high(KQB_PIN_SW0);
+    gpio_set_pin_input_high(KQB_PIN_SW1);
+    gpio_set_pin_input_high(KQB_PIN_SW2);
     gpio_set_pin_output_push_pull(KQB_PIN_LED0);
+    gpio_set_pin_output_push_pull(KQB_PIN_LED1);
+    gpio_set_pin_output_push_pull(KQB_PIN_LED2);
 
     // Deassrt reset
     gpio_write_pin_low(KQB_PIN_CHRST);
@@ -136,8 +142,10 @@ uint32_t qt_matrix_scan(matrix_row_t *matrix_raw) {
     if (led_on_count) {
         led_on_count--;
         gpio_write_pin_high(KQB_PIN_LED0);
+        gpio_write_pin_high(KQB_PIN_LED2);
     } else {
         gpio_write_pin_low(KQB_PIN_LED0);
+        gpio_write_pin_low(KQB_PIN_LED2);
     }
 
     if (readPin(BOOTPIN) == 0 && reset_counter < 0) {
@@ -145,6 +153,7 @@ uint32_t qt_matrix_scan(matrix_row_t *matrix_raw) {
     }
 
     if (ch559_update_mode) {
+        bmp_set_enable_task_interval_stretch(false);
         return 0;
     }
 
@@ -163,6 +172,13 @@ uint32_t qt_matrix_scan(matrix_row_t *matrix_raw) {
     matrix_has_changed = 0;
     matrix_has_changed |= process_packet(matrix_raw);
 
+    // override matrix by physical switches on quantizer b2
+    if (ch559_start) {
+        matrix_row_t row1 = matrix_raw[1];
+        matrix_row_t row1_1 = (row1 & ~0x000007) | (gpio_read_pin(KQB_PIN_SW0) ? 0 : (1 << 0)) | (gpio_read_pin(KQB_PIN_SW1) ? 0 : (1 << 1)) | (gpio_read_pin(KQB_PIN_SW2) ? 0 : (1 << 2));
+        matrix_has_changed |= row1 != row1_1;
+        matrix_raw[1] = row1_1;
+    }
     // uart_flush_rx_buffer();
 
     return matrix_has_changed ? 1 : 0;

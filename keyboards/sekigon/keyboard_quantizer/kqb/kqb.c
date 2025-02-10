@@ -317,6 +317,9 @@ MSCMD_USER_RESULT usrcmd_chboot(MSOPT *msopt, MSCMD_USER_OBJECT usrobj) {
     cli_app_t cli_app = {.func = pass_uart, .data = NULL};
     set_cli_app(&cli_app);
 
+    BMPAPI->app.schedule_next_task(MATRIX_SCAN_TIME_MS);
+    bmp_set_enable_task_interval_stretch(false);
+
     return 0;
 }
 
