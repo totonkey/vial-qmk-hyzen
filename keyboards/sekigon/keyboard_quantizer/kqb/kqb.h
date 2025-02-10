@@ -30,6 +30,10 @@ enum {
     KQB_PIN_CS,
     KQB_PIN_TX,
     KQB_PIN_RX,
+    KQB_PIN_LED2,
+    KQB_PIN_SW0,
+    KQB_PIN_SW1,
+    KQB_PIN_SW2,
 } KQB_PIN;
 
 int  send_reset_cmd(void);
