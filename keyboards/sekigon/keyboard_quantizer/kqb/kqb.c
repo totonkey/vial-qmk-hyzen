@@ -201,6 +201,8 @@ void matrix_scan_kb(void) {
     }
 
     matrix_scan_user();
+
+    bmp_set_enable_task_interval_stretch(false);
 }
 
 void uart_flush_rx_buffer(void) { BMPAPI->uart.send(NULL, 0); }
