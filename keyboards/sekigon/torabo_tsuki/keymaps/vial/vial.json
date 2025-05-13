@@ -976,6 +976,16 @@
       "shortName": "JU\nOVR"
     },
     {
+      "name"  : "ENABLE_WEB_BT_CONNECTION",
+      "title" : "Enable web bluetooth connection",
+      "shortName" : "EN\nWEBBT"
+    },
+    {
+      "name": "DISABLE_WEB_BT_CONNECTION",
+      "title": "Disable web bluetooth connection",
+      "shortName": "DIS\nWEBBT"
+    },
+    {
       "name": "ENABLE_DRAG_SCROLL_ON_HOLD",
       "title": "Enable drag scroll on hold",
       "shortName": "DRAG\nSCROLL"

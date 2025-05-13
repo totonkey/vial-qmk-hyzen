@@ -30,5 +30,7 @@ enum bmp_custom_keycodes {
     DISABLE_KEY_OS_OVERRIDE, /* Disable key override for JP/US OS */
     ENABLE_US_KEY_ON_JP_OS_OVERRIDE, /* Enable US keyboard on JP OS */
     ENABLE_JP_KEY_ON_US_OS_OVERRIDE, /* Enable JP keyboard on US OS */
+    EN_WEBBT,         /* Enable Web bluetooth connection */
+    DIS_WEBBT,        /* Enable Web bluetooth connection */
     BMP_SAFE_RANGE
 };

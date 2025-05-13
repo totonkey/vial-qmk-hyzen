@@ -137,6 +137,14 @@ bool process_record_bmp(uint16_t keycode, keyrecord_t *record) {
                 bmp_set_key_os_override(BMP_JP_KEY_US_OS_OVERRIDE);
                 return false;
             }
+            case EN_WEBBT: {
+                BMPAPI->ble.change_conn_mode(true);
+                return false;
+            }
+            case DIS_WEBBT: {
+                BMPAPI->ble.change_conn_mode(false);
+                return false;
+            }
         }
     }
     else {

@@ -6,7 +6,7 @@
 
 #include "error_def.h"
 
-#define API_VERSION 18
+#define API_VERSION 20
 #define CONFIG_VERSION 3
 #define PINS_MAX 32
 
@@ -162,7 +162,7 @@ typedef struct {
     bmp_api_ble_mode_t       mode;
     bmp_api_ble_startup_t    startup;
     bmp_api_ble_conn_param_t param_peripheral;
-    bmp_api_ble_conn_param_t param_central;  // for split master
+    bmp_api_ble_conn_param_t param_central; // for split master
     bmp_api_led_config_t     led;
     bmp_api_encoder_config_t encoder;
     union {
@@ -288,6 +288,7 @@ typedef struct {
     uint16_t (*get_connection_status)(void);
     bmp_error_t (*send_user_data_s2m)(uint8_t id, uint8_t data);
     bmp_error_t (*set_user_data_cb)(void (data_receive_cb)(uint8_t id, uint8_t data));
+    void (*change_conn_mode)(bool activate_web_bt_mode);
 } bmp_api_ble_t;
 
 typedef struct {
@@ -449,6 +450,7 @@ typedef struct {
     bmp_api_timer_t      timer;
     bmp_api_user_flash_t flash;
     bmp_api_spi_slave_t  spis;
+    void (*debug_call)(uint32_t cmd_id, const void* args);
 } bmp_api_t;
 
 #define BMPAPI ((bmp_api_t*)0xFDE00)

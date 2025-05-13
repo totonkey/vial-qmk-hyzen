@@ -46,6 +46,7 @@ static MSCMD_USER_RESULT usrcmd_start_xmodem(MSOPT *msopt, MSCMD_USER_OBJECT usr
 static MSCMD_USER_RESULT usrcmd_enable_vial(MSOPT *msopt, MSCMD_USER_OBJECT usrobj);
 static MSCMD_USER_RESULT usrcmd_factory_reset(MSOPT *msopt, MSCMD_USER_OBJECT usrobj);
 static MSCMD_USER_RESULT usrcmd_battery_check(MSOPT *msopt, MSCMD_USER_OBJECT usrobj);
+static MSCMD_USER_RESULT usrcmd_change_conn_mode(MSOPT *msopt, MSCMD_USER_OBJECT usrobj);
 
 static const MSCMD_COMMAND_TABLE table[] = {{"help", usrcmd_help, "Show this message"},
                                             {"version", usrcmd_version, "Firmware version"},
@@ -64,6 +65,7 @@ static const MSCMD_COMMAND_TABLE table[] = {{"help", usrcmd_help, "Show this mes
                                             {"vial", usrcmd_enable_vial, "Enable/Disable vial"},
                                             {"factory_reset", usrcmd_factory_reset, "Factory reset"},
                                             {"battery", usrcmd_battery_check, "Battery check"},
+                                            {"mode", usrcmd_change_conn_mode, "Change connection mode"},
 #ifdef USER_DEFINED_MSCMD
                                             USER_DEFINED_MSCMD
 #endif
@@ -395,5 +397,21 @@ static MSCMD_USER_RESULT usrcmd_battery_check(MSOPT *msopt, MSCMD_USER_OBJECT us
         printf("slave: %4dmV\n", BMPAPI->app.get_vcc_mv(1));
     }
 
+    return 0;
+}
+
+static MSCMD_USER_RESULT usrcmd_change_conn_mode(MSOPT *msopt, MSCMD_USER_OBJECT usrobj) {
+    char arg[16];
+    if (msopt->argc >= 2) {
+        msopt_get_argv(msopt, 1, arg, sizeof(arg));
+        if (strcmp(arg, "web") == 0) {
+            BMPAPI->ble.change_conn_mode(true);
+            printf("Change to web bt mode\n");
+            return 0;
+        }
+    }
+
+    BMPAPI->ble.change_conn_mode(false);
+    printf("Change to normal mode\n");
     return 0;
 }

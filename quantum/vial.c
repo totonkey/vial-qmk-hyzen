@@ -83,8 +83,8 @@ __attribute__((unused)) static uint16_t vial_keycode_firewall(uint16_t in) {
 
 void vial_handle_cmd(uint8_t *msg, uint8_t length) {
     /* All packets must be fixed 32 bytes */
-    if (length != VIAL_RAW_EPSIZE)
-        return;
+    // if (length != VIAL_RAW_EPSIZE)
+    //     return;
 
     /* msg[0] is 0xFE -- prefix vial magic */
     switch (msg[1]) {
@@ -115,8 +115,8 @@ void vial_handle_cmd(uint8_t *msg, uint8_t length) {
         /* Retrieve 32-bytes block of the definition, page ID encoded within 2 bytes */
         case vial_get_def: {
             uint32_t page = msg[2] + (msg[3] << 8);
-            uint32_t start = page * VIAL_RAW_EPSIZE;
-            uint32_t end = start + VIAL_RAW_EPSIZE;
+            uint32_t start = page * length;
+            uint32_t end = start + length;
             if (end < start || start >= sizeof(keyboard_definition))
                 return;
             if (end > sizeof(keyboard_definition))

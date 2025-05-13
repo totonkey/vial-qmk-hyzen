@@ -129,8 +129,8 @@ static bool pre_raw_hid_receive(uint8_t *msg, uint8_t len) {
             case vial_get_def: {
                 _continue      = false;
                 uint32_t page  = msg[2] + (msg[3] << 8);
-                uint32_t start = page * VIAL_RAW_EPSIZE;
-                uint32_t end   = start + VIAL_RAW_EPSIZE;
+                uint32_t start = page * len;
+                uint32_t end   = start + len;
 #ifdef BMP_USE_DEFAULT_VIAL_CONFIG
                 if (end < start || start >= sizeof(keyboard_definition)) break;
                 if (end > sizeof(keyboard_definition)) end = sizeof(keyboard_definition);
@@ -160,13 +160,13 @@ void bmp_raw_hid_receive_common(const uint8_t *data, uint8_t len) {
     }
 
     memset(via_data, 0, sizeof(via_data));
-    memcpy(via_data, data, sizeof(via_data));
+    memcpy(via_data, data, len);
 
-    if (pre_raw_hid_receive(via_data, sizeof(via_data))) {
+    if (pre_raw_hid_receive(via_data, len)) {
         if (is_vial_enabled) {
-            raw_hid_receive(via_data, sizeof(via_data));
+            raw_hid_receive(via_data, len);
         } else {
-            raw_hid_receive_qmk(via_data, sizeof(via_data));
+            raw_hid_receive_qmk(via_data, len);
         }
     }
 }
