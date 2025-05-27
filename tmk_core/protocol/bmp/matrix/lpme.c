@@ -60,6 +60,11 @@ void lpme_init(lpme_config_t * const config)
     }
 
     config->addr = LPME_ADDR_UNKNOWN;
+
+    gpio_set_pin_output_push_pull(CONFIG_PIN_SCL);
+    gpio_write_pin_high(CONFIG_PIN_SCL);
+    gpio_set_pin_output_push_pull(CONFIG_PIN_SDA);
+    gpio_write_pin_high(CONFIG_PIN_SDA);
 }
 
 static matrix_row_t lpme_read_col_on_row(lpme_config_t const * const config)
@@ -182,6 +187,15 @@ uint32_t lpme_scan(lpme_config_t *const config, matrix_row_t *rows,
     const uint32_t  sleep_enter_threthold2 = 30000;
     const uint32_t  sleep2_interval        = MAINTASK_INTERVAL * 6;
 
+    static bool once = false;
+    if (!once){
+        if (timer_read32() < 1000){
+            return 0;
+        }else{
+            once = true;
+        }
+    }
+
     if (wakeup) {
         run_mode            = 0;
         last_key_press_time = timer_read32();
@@ -251,6 +265,8 @@ uint32_t lpme_scan(lpme_config_t *const config, matrix_row_t *rows,
     // charge to LPME
     gpio_set_pin_output_push_pull(CONFIG_PIN_SCL);
     gpio_write_pin_high(CONFIG_PIN_SCL);
+    gpio_set_pin_output_push_pull(CONFIG_PIN_SDA);
+    gpio_write_pin_high(CONFIG_PIN_SDA);
 
     return change;
 }
