@@ -25,12 +25,17 @@
 static int    encoder_count                   = 0;
 static int8_t encoder_value[NUM_ENCODERS_MAX] = {0};
 
+static void encoder_exec_mapping(uint8_t index, bool clockwise);
+
 __attribute__((weak)) bool encoder_update_user(uint8_t index, bool clockwise) {
     return true;
 }
 
 __attribute__((weak)) bool encoder_update_kb(uint8_t index, bool clockwise) {
     bool res = encoder_update_user(index, clockwise);
+    if (res) {
+        encoder_exec_mapping(index, clockwise);
+    }
     return res;
 }
 
@@ -75,10 +80,10 @@ bool encoder_task(void) {
         resolution        = resolution > 0 ? resolution : ENCODER_RESOLUTION;
 
         if (encoder_value[index] >= resolution) {
-            encoder_exec_mapping(index, ENCODER_COUNTER_CLOCKWISE);
+            encoder_update_kb(index, ENCODER_COUNTER_CLOCKWISE);
             changed = true;
         } else if (encoder_value[index] <= -resolution) {
-            encoder_exec_mapping(index, ENCODER_CLOCKWISE);
+            encoder_update_kb(index, ENCODER_CLOCKWISE);
             changed = true;
         }
 
