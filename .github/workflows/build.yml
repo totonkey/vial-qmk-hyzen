@@ -1,4 +1,4 @@
-name: Build KQ Mini Firmware
+name: My KQM Build
 
 on:
   workflow_dispatch:
@@ -7,28 +7,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container: ghcr.io/qmk/qmk_cli
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Mark workspace as safe for git
-        run: git config --global --add safe.directory $GITHUB_WORKSPACE
-
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: python3 -m pip install -r requirements.txt
 
-      - name: Build firmware
-        run: make sekigon/keyboard_quantizer/mini:vial
-        env:
-          QMK_HOME: ${{ github.workspace }}
+      - name: Build
+        run: |
+          git config --global --add safe.directory $(pwd)
+          qmk compile -kb sekigon/keyboard_quantizer/mini -km vial
 
-      - name: Upload firmware artifact
+      - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: kq-mini-firmware
-          path: |
-            *.uf2
-            .build/*.uf2
+          name: kqm-firmware
+          path: "*.uf2"
