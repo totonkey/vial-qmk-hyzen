@@ -1,0 +1,29 @@
+name: Build KQ Mini Firmware
+
+on:
+  workflow_dispatch: # これを入れることでActions画面から手動実行ボタンが出るようになるよ
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ghcr.io/qmk/qmk_cli # QMK公式のビルド環境をそのまま使う
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Mark workspace as safe for git
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
+
+      - name: Build firmware
+        run: make sekigon/keyboard_quantizer/mini:vial
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kq-mini-firmware
+          path: |
+            *.uf2
+            .build/*.uf2
