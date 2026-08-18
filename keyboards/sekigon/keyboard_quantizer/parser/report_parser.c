@@ -29,7 +29,7 @@ vendor_report_parser(uint16_t usage_page, hid_report_member_t const *member, uin
                      uint8_t len);
 
 bool parse_report(uint8_t interface, uint8_t const *report, uint8_t len) {
-  if (report[0] == 0x03 && len >= 3) {
+  if (report[0] == 0x03 && len < 8) {
     extern void host_consumer_send(uint16_t);
     host_consumer_send(report[1] | (report[2] << 8));
     return true;
