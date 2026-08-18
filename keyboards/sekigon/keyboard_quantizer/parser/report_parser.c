@@ -38,9 +38,9 @@ bool parse_report(uint8_t interface, uint8_t const *report, uint8_t len) {
   hid_device_t const *device = get_hid_device_def(interface);
 
   if (device == NULL) {
-    dprintf("parse_report: device is NULL for interface=%d\n", (unsigned int)interface);
     return false;
   }
+
 
   hid_id_collection_t const *collection = device->id_collection;
 
