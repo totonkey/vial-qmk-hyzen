@@ -113,6 +113,64 @@ static void push_deferred_key_record(uint16_t keycode, keyevent_t *event) {
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     bool cont = process_record_mouse(keycode, record);
 
+    // ▼▼▼ 今回追加するカスタム処理ブロック ▼▼▼
+    
+    // 1. テスト用：F22に定義したキーを、Macに単体の地球儀キーとして送信する処理
+    if (keycode == KC_F22) {
+        if (record->event.pressed) {
+            host_consumer_send(0x029D);
+        } else {
+            host_consumer_send(0);
+        }
+        return false; 
+    }
+
+    // 2. RCtl(kc) などの複合キーの「左Ctrl混入バグ」を回避しつつ、地球儀を連動させる処理
+    if (keycode >= QK_MODS && keycode <= QK_MODS_MAX) {
+        uint8_t qmk_mods = QK_MODS_GET_MODS(keycode);
+        
+        // もし設定された修飾キーが 右Ctrl (QMK内部値: 0x11) であった場合のみ横取りします
+        if (qmk_mods == 0x11) { 
+            // 左Ctrlフラグ(0x01)を除外し、純粋な右Ctrl(0x10)に変換します
+            uint8_t usb_mods = 0x10; 
+
+            if (record->event.pressed) {
+                register_mods(usb_mods);    // 正しい右Ctrlのみを送信
+                host_consumer_send(0x029D); // 地球儀キーを同時に送信
+                
+                // 元コードのVial標準遅延処理を踏襲します
+                uint16_t deferred_keycode = QK_MODS_GET_BASIC_KEYCODE(keycode);
+                keyevent_t deferred_key_event = (keyevent_t){.type = KEY_EVENT, .key = (keypos_t){.row = VIAL_MATRIX_MAGIC, .col = VIAL_MATRIX_MAGIC}, .pressed = 1, .time = (timer_read() | 1)};
+                push_deferred_key_record(deferred_keycode, &deferred_key_event);
+            } else {
+                uint16_t deferred_keycode = QK_MODS_GET_BASIC_KEYCODE(keycode);
+                keyevent_t deferred_key_event = (keyevent_t){.type = KEY_EVENT, .key = (keypos_t){.row = VIAL_MATRIX_MAGIC, .col = VIAL_MATRIX_MAGIC}, .pressed = 0, .time = (timer_read() | 1)};
+                
+                unregister_mods(usb_mods);
+                host_consumer_send(0); // 地球儀キーを解除
+                
+                push_deferred_key_record(deferred_keycode, &deferred_key_event);
+            }
+            return false; // 横取りが完了したため、以降のバグがある元処理には進ませません
+        }
+    }
+    
+    // 3. 単体の 右Ctrl (KC_RCTL) が押された場合の地球儀連動処理
+    if (keycode == KC_RCTL) {
+        if (record->event.pressed) {
+            register_mods(MOD_BIT(KC_RCTL)); 
+            host_consumer_send(0x029D);
+        } else {
+            unregister_mods(MOD_BIT(KC_RCTL));
+            host_consumer_send(0);
+        }
+        return false;
+    }
+    // ▲▲▲ カスタム処理ブロック ここまで ▲▲▲
+
+    // To apply key overrides to keycodes combined shift modifier, separate to two actions
+    // （ここから下は元のコードがそのまま続きます）
+
     // To apply key overrides to keycodes combined shift modifier, separate to two actions
     if (keycode >= QK_MODS && keycode <= QK_MODS_MAX) {
         if (record->event.pressed) {
@@ -178,22 +236,6 @@ void post_process_record_user(uint16_t keycode, keyrecord_t* record) {
 }
 
 void housekeeping_task_user(void) {
-    // ▼▼▼ 追加：右Ctrlに地球儀キー（Usage ID 0x029D）を直接連動させる処理 ▼▼▼
-    static bool globe_is_pressed = false;
-    
-    // 現在のモディファイア状態を取得し、右Ctrlがアクティブか判定
-    bool rctl_is_active = (get_mods() & MOD_BIT(KC_RCTL)) || (get_oneshot_mods() & MOD_BIT(KC_RCTL));
-
-    if (rctl_is_active && !globe_is_pressed) {
-        host_consumer_send(0x029D); // Appleの地球儀キーコードを送信
-        globe_is_pressed = true;
-    } else if (!rctl_is_active && globe_is_pressed) {
-        host_consumer_send(0);      // 離されたら0を送って停止
-        globe_is_pressed = false;
-    }
-    // ▲▲▲ 追加処理 ここまで ▲▲▲
-
-    // ▼▼▼ 元々ある遅延キー処理（絶対に消さないこと） ▼▼▼
     for (int i = 0; i < DEFFERED_KEY_RECORD_LEN; i++) {
         if (deferred_key_record[i].keycode != KC_NO) {
             g_vial_magic_keycode_override = deferred_key_record[i].keycode;
@@ -204,9 +246,7 @@ void housekeeping_task_user(void) {
         }
     }
     cli_exec();
-    // ▲▲▲ 元々の処理 ここまで ▲▲▲
 }
-
 
 #include "vial.h"
 #include "dynamic_keymap.h"
