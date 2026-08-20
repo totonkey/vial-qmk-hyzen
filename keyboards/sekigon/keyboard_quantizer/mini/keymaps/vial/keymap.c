@@ -129,6 +129,35 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     }
 
+    // ▼▼▼ F22, F23, F24 の処理 ▼▼▼
+    switch (keycode) {
+        case KC_F22: // 地球儀キー (Globe)
+            if (record->event.pressed) {
+                host_consumer_send(0x029D); 
+            } else {
+                host_consumer_send(0);
+            }
+            return false;
+
+        case KC_F23: // ⌘⇧← (Cmd+Shift+Left)
+            if (record->event.pressed) {
+                register_code16(SGUI(KC_LEFT)); 
+            } else {
+                unregister_code16(SGUI(KC_LEFT));
+            }
+            return false;
+
+        case KC_F24: // ⌘⇧→ (Cmd+Shift+Right)
+            if (record->event.pressed) {
+                register_code16(SGUI(KC_RIGHT)); 
+            } else {
+                unregister_code16(SGUI(KC_RIGHT));
+            }
+            return false;
+    }
+    // ▲▲▲ F22, F23, F24 ここまで ▲▲▲
+
+    // 元からあるOSキーオーバーライドの処理
     if (record->event.pressed) {
         switch (keycode) {
             case QK_KB_0:
