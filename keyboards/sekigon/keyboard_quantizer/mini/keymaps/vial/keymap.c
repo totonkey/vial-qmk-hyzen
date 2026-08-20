@@ -131,19 +131,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     // ▼▼▼ F22, F23, F24 の処理 ▼▼▼
     switch (keycode) {
-        case LT(1, KC_F23): // 長押しLT1、短押し ⌘⇧[
+        case LT(1, KC_LBRC):
             if (record->tap.count && record->event.pressed) {
-                tap_code16(S(G(KC_LBRC))); 
-                return false; 
+                tap_code16(S(G(KC_LBRC)));
+                return false;
             }
-            return true; 
+            return true;
 
-        case MT(MOD_LALT, KC_F24): // 長押しOption、短押し ⌘⇧]
+        case MT(MOD_LALT, KC_RBRC):
             if (record->tap.count && record->event.pressed) {
-                tap_code16(S(G(KC_RBRC))); 
-                return false; 
+                tap_code16(S(G(KC_RBRC)));
+                return false;
             }
-            return true; 
+            return true;
     }
     // ▲▲▲ F22, F23, F24 ここまで ▲▲▲
 
