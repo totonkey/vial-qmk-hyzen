@@ -139,19 +139,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             return false;
 
-        case KC_F23: // ⌘⇧← (Cmd+Shift+Left)
+        case KC_F23: // ⌘⇧+[ (Left Bracket)
             if (record->event.pressed) {
-                register_code16(SGUI(KC_LEFT)); 
+                register_code16(KC_LBRC); 
             } else {
-                unregister_code16(SGUI(KC_LEFT));
+                unregister_code16(KC_LBRC);
             }
             return false;
 
-        case KC_F24: // ⌘⇧→ (Cmd+Shift+Right)
+        case KC_F24: // ] ⌘⇧+] (Right Bracket)
             if (record->event.pressed) {
-                register_code16(SGUI(KC_RIGHT)); 
+                register_code16(KC_RBRC); 
             } else {
-                unregister_code16(SGUI(KC_RIGHT));
+                unregister_code16(KC_RBRC);
             }
             return false;
     }

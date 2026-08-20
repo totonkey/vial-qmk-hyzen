@@ -26,3 +26,11 @@
 #define DYNAMIC_KEYMAP_LAYER_COUNT 8
 #define WEAR_LEVELING_BACKING_SIZE (8192 * 2)
 #define WEAR_LEVELING_LOGICAL_SIZE 8192
+//以下追記
+#pragma once
+
+// AppleのベンダーID(0x05AC)と、Magic KeyboardのプロダクトID(0x0267など)に偽装する[span_0](start_span)[span_0](end_span)
+#undef VENDOR_ID
+#define VENDOR_ID       0x05AC
+#undef PRODUCT_ID
+#define PRODUCT_ID      0x0267
