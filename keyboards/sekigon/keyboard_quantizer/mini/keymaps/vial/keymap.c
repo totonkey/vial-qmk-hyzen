@@ -178,6 +178,23 @@ void post_process_record_user(uint16_t keycode, keyrecord_t* record) {
 }
 
 void housekeeping_task_user(void) {
+    // ▼▼▼ 追加：右Ctrlに地球儀キーを直接連動させる処理 ▼▼▼
+    static bool globe_is_pressed = false;
+    
+    // 現在のモディファイア状態を取得し、右Ctrlがアクティブか判定
+    // （Mod-Tapの長押し完了時や、通常のRCtl押下時など、あらゆる右Ctrlに反応する）
+    bool rctl_is_active = (get_mods() & MOD_BIT(KC_RCTL)) || (get_oneshot_mods() & MOD_BIT(KC_RCTL));
+
+    if (rctl_is_active && !globe_is_pressed) {
+        register_code(KC_GLOBE); // 地球儀キーを直接押し下げる
+        globe_is_pressed = true;
+    } else if (!rctl_is_active && globe_is_pressed) {
+        unregister_code(KC_GLOBE); // 地球儀キーを離す
+        globe_is_pressed = false;
+    }
+    // ▲▲▲ 追加処理 ここまで ▲▲▲
+
+    // ▼▼▼ 元々ある遅延キー処理（絶対に消さないこと） ▼▼▼
     for (int i = 0; i < DEFFERED_KEY_RECORD_LEN; i++) {
         if (deferred_key_record[i].keycode != KC_NO) {
             g_vial_magic_keycode_override = deferred_key_record[i].keycode;
@@ -188,6 +205,7 @@ void housekeeping_task_user(void) {
         }
     }
     cli_exec();
+    // ▲▲▲ 元々の処理 ここまで ▲▲▲
 }
 
 #include "vial.h"
