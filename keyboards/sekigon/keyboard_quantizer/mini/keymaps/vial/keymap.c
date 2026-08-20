@@ -131,14 +131,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     // ▼▼▼ F22, F23, F24 の処理 ▼▼▼
     switch (keycode) {
-        case KC_F22: // 地球儀キー (Globe)
-            if (record->event.pressed) {
-                host_consumer_send(0x029D); 
-            } else {
-                host_consumer_send(0);
-            }
-            return false;
-
         case KC_F23: // ⌘⇧+[ (Left Bracket)
             if (record->event.pressed) {
                 register_code16(KC_LBRC); 
