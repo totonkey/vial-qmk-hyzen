@@ -42,8 +42,6 @@ void suspend_power_down_kb(void) {
         c1_suspended = true;
         kqm_set_suspend_led(true);
     }
-
-    suspend_power_down_user();
 }
 
 void suspend_wakeup_init_kb(void) {
@@ -52,6 +50,4 @@ void suspend_wakeup_init_kb(void) {
         c1_suspended = false;
         kqm_set_suspend_led(false);
     }
-
-    suspend_wakeup_init_user();
 }
