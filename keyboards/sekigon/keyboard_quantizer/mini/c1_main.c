@@ -90,9 +90,10 @@ static void __no_inline_not_in_flash_func(c1_trap_for_flash_operation)(void) {
         while (!c1_restart_flag) {
             continue;
         }
-        c1_restart_flag = false;
+
         next_sof = st_lld_get_counter() + 1010;
         chVTSetContinuous(&vt, TIME_MS2I(1), timer_cb, NULL);
+        c1_restart_flag = false;
     }
 }
 
@@ -127,6 +128,6 @@ void c1_main(void) {
 // Start 1ms timer
 void c1_start_timer(void) {
     chVTObjectInit(&vt);
-    chVTSetContinuous(&vt, TIME_MS2I(1), timer_cb, NULL);
     next_sof = st_lld_get_counter() + 1010;
+    chVTSetContinuous(&vt, TIME_MS2I(1), timer_cb, NULL);
 }

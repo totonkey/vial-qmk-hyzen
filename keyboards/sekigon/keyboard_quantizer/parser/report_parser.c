@@ -6,7 +6,6 @@
 
 #include <stddef.h>
 #include "print.h"
-#include "debug.h"
 
 #define LEN(x) (sizeof(x) / sizeof(x[0]))
 
@@ -30,16 +29,6 @@ vendor_report_parser(uint16_t usage_page, hid_report_member_t const *member, uin
                      uint8_t len);
 
 bool parse_report(uint8_t interface, uint8_t const *report, uint8_t len) {
-  if (len < 8) {
-    dprintf("Short HID report: interface=%u len=%u data:", interface, len);
-
-    for (uint8_t i = 0; i < len; i++) {
-      dprintf(" %02X", report[i]);
-    }
-
-    dprintf("\n");
-  }
-
   if (len >= 3 && len < 8 && report[0] == 0x03) {
     extern void host_consumer_send(uint16_t);
     host_consumer_send(report[1] | (report[2] << 8));
@@ -51,6 +40,7 @@ bool parse_report(uint8_t interface, uint8_t const *report, uint8_t len) {
   if (device == NULL) {
     return false;
   }
+
 
   hid_id_collection_t const *collection = device->id_collection;
 
