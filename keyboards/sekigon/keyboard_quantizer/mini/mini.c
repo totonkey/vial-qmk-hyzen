@@ -7,10 +7,6 @@
 #include "debug.h"
 #include "c1.h"
 
-void kqm_set_suspend_led(bool suspended);
-
-static bool c1_suspended;
-
 void keyboard_pre_init_kb(void) {
     set_sys_clock_khz(120000, true);
     keyboard_pre_init_user();
@@ -33,21 +29,4 @@ bool backing_store_lock(void) {
 bool backing_store_unlock(void) {
     c1_before_flash_operation();
     return true;
-}
-
-void suspend_power_down_kb(void) {
-    // QMK can call this repeatedly while USB is suspended.
-    if (!c1_suspended) {
-        c1_suspend_usb_host();
-        c1_suspended = true;
-        kqm_set_suspend_led(true);
-    }
-}
-
-void suspend_wakeup_init_kb(void) {
-    if (c1_suspended) {
-        c1_resume_usb_host();
-        c1_suspended = false;
-        kqm_set_suspend_led(false);
-    }
 }
