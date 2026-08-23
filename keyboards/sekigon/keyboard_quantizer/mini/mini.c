@@ -38,7 +38,7 @@ bool backing_store_unlock(void) {
 void suspend_power_down_kb(void) {
     // QMK can call this repeatedly while USB is suspended.
     if (!c1_suspended) {
-        c1_before_flash_operation();
+        c1_suspend_usb_host();
         c1_suspended = true;
         kqm_set_suspend_led(true);
     }
@@ -46,7 +46,7 @@ void suspend_power_down_kb(void) {
 
 void suspend_wakeup_init_kb(void) {
     if (c1_suspended) {
-        c1_after_flash_operation();
+        c1_resume_usb_host();
         c1_suspended = false;
         kqm_set_suspend_led(false);
     }

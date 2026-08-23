@@ -4,6 +4,7 @@
 #include "c1.h"
 #include "ch.h"
 #include "hal.h"
+#include "pio_usb_ll.h"
 
 // 1ms repeat timer for USB frame
 extern void pio_usb_host_frame(void);
@@ -11,6 +12,7 @@ extern void pio_usb_host_frame(void);
 static virtual_timer_t vt;
 static volatile bool   c1_stop_flag;
 static volatile bool   c1_restart_flag;
+static volatile bool c1_usb_disconnect_flag;
 
 static uint32_t next_sof;
 
@@ -53,14 +55,43 @@ void c1_after_flash_operation(void) {
     }
 }
 
+void c1_suspend_usb_host(void) {
+    c1_usb_disconnect_flag = true;
+    c1_before_flash_operation();
+}
+
+void c1_resume_usb_host(void) {
+    c1_after_flash_operation();
+}
+
+static void c1_disconnect_usb_host(void) {
+    root_port_t *root = PIO_USB_ROOT_PORT(0);
+
+    root->connected = false;
+    root->suspended = true;
+    root->ints      = PIO_USB_INTS_DISCONNECT_BITS;
+
+    // Notify TinyUSB before pausing core1. This clears its device and
+    // endpoint state. The running keyboard remains physically connected.
+    pio_usb_host_irq_handler(0);
+    c1_main_task();
+}
+
 static void __no_inline_not_in_flash_func(c1_trap_for_flash_operation)(void) {
     if (c1_stop_flag) {
         chVTReset(&vt);
+
+        if (c1_usb_disconnect_flag) {
+            c1_disconnect_usb_host();
+            c1_usb_disconnect_flag = false;
+        }
+
         c1_stop_flag = false;
         while (!c1_restart_flag) {
             continue;
         }
         c1_restart_flag = false;
+        next_sof = st_lld_get_counter() + 1010;
         chVTSetContinuous(&vt, TIME_MS2I(1), timer_cb, NULL);
     }
 }
