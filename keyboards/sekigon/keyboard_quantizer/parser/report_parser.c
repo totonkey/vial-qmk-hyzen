@@ -29,6 +29,16 @@ vendor_report_parser(uint16_t usage_page, hid_report_member_t const *member, uin
                      uint8_t len);
 
 bool parse_report(uint8_t interface, uint8_t const *report, uint8_t len) {
+  *report, uint8_t len) {
+    if (len < 8) {
+        dprintf("Short HID report: interface=%u len=%u data:", interface, len);
+
+        for (uint8_t i = 0; i < len; i++) {
+            dprintf(" %02X", report[i]);
+        }
+
+        dprintf("\n");
+    }
   if (report[0] == 0x03 && len < 8) {
     extern void host_consumer_send(uint16_t);
     host_consumer_send(report[1] | (report[2] << 8));
