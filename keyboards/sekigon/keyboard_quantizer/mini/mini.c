@@ -6,6 +6,9 @@
 #include "bootloader.h"
 #include "debug.h"
 #include "c1.h"
+#include "suspend.h"
+
+void kqm_set_suspend_led(bool suspended);
 
 void keyboard_pre_init_kb(void) {
     set_sys_clock_khz(120000, true);
@@ -29,4 +32,14 @@ bool backing_store_lock(void) {
 bool backing_store_unlock(void) {
     c1_before_flash_operation();
     return true;
+}
+
+void suspend_power_down_kb(void) {
+    kqm_set_suspend_led(true);
+    suspend_power_down_user();
+}
+
+void suspend_wakeup_init_kb(void) {
+    kqm_set_suspend_led(false);
+    suspend_wakeup_init_user();
 }

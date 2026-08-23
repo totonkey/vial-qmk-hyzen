@@ -33,6 +33,10 @@ void matrix_init_custom(void) {
     gpio_write_pin_high(KQ_PIN_LED);
 }
 
+void kqm_set_suspend_led(bool suspended) {
+    gpio_write_pin(KQ_PIN_LED, !suspended);
+}
+
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
     bool matrix_has_changed = false;
 
