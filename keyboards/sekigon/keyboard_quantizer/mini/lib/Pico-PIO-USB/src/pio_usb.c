@@ -25,6 +25,13 @@
 
 #define UNUSED_PARAMETER(x) (void)x
 
+#define PIO_USB_RX_EOP_TIMEOUT_US 7
+
+static inline bool pio_usb_rx_eop_timed_out(uint32_t start) {
+  return (uint32_t)(timer_hw->timerawl - start) >
+         PIO_USB_RX_EOP_TIMEOUT_US;
+}
+
 usb_device_t pio_usb_device[PIO_USB_DEVICE_CNT];
 pio_port_t pio_port[1];
 root_port_t pio_usb_root_port[PIO_USB_ROOT_PORT_CNT];
@@ -135,9 +142,17 @@ uint8_t __no_inline_not_in_flash_func(pio_usb_bus_wait_handshake)(pio_port_t* pp
     }
   }
 
-  if (t > 0) {
-    while ((pp->pio_usb_rx->irq & IRQ_RX_COMP_MASK) == 0) {
-      continue;
+  if (t <= 0) {
+    pio_sm_set_enabled(pp->pio_usb_rx, pp->sm_rx, false);
+    return 0;
+  }
+
+  uint32_t eop_wait_start = timer_hw->timerawl;
+
+  while ((pp->pio_usb_rx->irq & IRQ_RX_COMP_MASK) == 0) {
+    if (pio_usb_rx_eop_timed_out(eop_wait_start)) {
+      pio_sm_set_enabled(pp->pio_usb_rx, pp->sm_rx, false);
+      return 0;
     }
   }
 
@@ -170,6 +185,8 @@ int __no_inline_not_in_flash_func(pio_usb_bus_receive_packet_and_handshake)(
   // timing critical start
   if (t > 0) {
     if (handshake == USB_PID_ACK) {
+      uint32_t eop_wait_start = timer_hw->timerawl;
+
       while ((pp->pio_usb_rx->irq & IRQ_RX_COMP_MASK) == 0) {
         if (pio_sm_get_rx_fifo_level(pp->pio_usb_rx, pp->sm_rx)) {
           uint8_t data = pio_sm_get(pp->pio_usb_rx, pp->sm_rx) >> 24;
@@ -180,6 +197,11 @@ int __no_inline_not_in_flash_func(pio_usb_bus_receive_packet_and_handshake)(
           crc_receive = (crc_receive >> 8) | (data << 8);
           crc_receive_inverse = crc_receive ^ 0xffff;
           crc_match = (crc_receive_inverse == crc_prev2);
+
+          // データが届いている間はタイムアウトを延長する
+          eop_wait_start = timer_hw->timerawl;
+        } else if (pio_usb_rx_eop_timed_out(eop_wait_start)) {
+          return -1;
         }
       }
 
@@ -195,9 +217,14 @@ int __no_inline_not_in_flash_func(pio_usb_bus_receive_packet_and_handshake)(
       }
     } else {
       // just discard received data since we NAK/STALL anyway
+      uint32_t eop_wait_start = timer_hw->timerawl;
+
       while ((pp->pio_usb_rx->irq & IRQ_RX_COMP_MASK) == 0) {
-        continue;
+        if (pio_usb_rx_eop_timed_out(eop_wait_start)) {
+          return -1;
+        }
       }
+
       pio_sm_clear_fifos(pp->pio_usb_rx, pp->sm_rx);
 
       pio_usb_bus_send_handshake(pp, handshake);
