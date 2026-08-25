@@ -10,8 +10,6 @@
 
 void kqm_set_suspend_led(bool suspended);
 
-static bool c1_suspended = false;
-
 void keyboard_pre_init_kb(void) {
     set_sys_clock_khz(120000, true);
     keyboard_pre_init_user();
@@ -37,22 +35,11 @@ bool backing_store_unlock(void) {
 }
 
 void suspend_power_down_kb(void) {
-    // QMK may call this repeatedly while USB is suspended.
-    if (!c1_suspended) {
-        c1_before_flash_operation();
-        c1_suspended = true;
-    }
-
     kqm_set_suspend_led(true);
     suspend_power_down_user();
 }
 
 void suspend_wakeup_init_kb(void) {
-    if (c1_suspended) {
-        c1_after_flash_operation();
-        c1_suspended = false;
-    }
-
     kqm_set_suspend_led(false);
     suspend_wakeup_init_user();
 }
