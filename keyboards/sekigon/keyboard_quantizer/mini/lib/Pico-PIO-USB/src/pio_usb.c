@@ -142,7 +142,7 @@ uint8_t __no_inline_not_in_flash_func(pio_usb_bus_wait_handshake)(pio_port_t* pp
     }
   }
 
-  if (t <= 0) {
+  if (idx != 2) {
     pio_sm_set_enabled(pp->pio_usb_rx, pp->sm_rx, false);
     return 0;
   }
@@ -183,7 +183,7 @@ int __no_inline_not_in_flash_func(pio_usb_bus_receive_packet_and_handshake)(
   }
 
   // timing critical start
-  if (t > 0) {
+  if (idx == 2) {
     if (handshake == USB_PID_ACK) {
       uint32_t eop_wait_start = timer_hw->timerawl;
 
