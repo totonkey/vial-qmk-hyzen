@@ -19,6 +19,15 @@ static uint8_t          hid_report_buffer[64];
 static volatile uint8_t hid_report_size;
 static uint8_t          hid_instance;
 static bool             hid_disconnect_flag;
+
+typedef struct {
+    uint8_t dev_addr;
+    uint8_t instance;
+    bool    pending;
+} hid_receive_slot_t;
+
+static hid_receive_slot_t hid_receive_slots[CFG_TUH_HID];
+
 static uint8_t          pre_keyreport[8];
 #define LED_BLINK_TIME_MS 50
 #define KQ_PIN_LED 7
@@ -35,6 +44,56 @@ void matrix_init_custom(void) {
 
 void kqm_set_suspend_led(bool suspended) {
     gpio_write_pin(KQ_PIN_LED, !suspended);
+}
+
+static hid_receive_slot_t *hid_receive_slot_get(uint8_t dev_addr, uint8_t instance) {
+    for (uint8_t idx = 0; idx < CFG_TUH_HID; idx++) {
+        if (hid_receive_slots[idx].dev_addr == dev_addr && hid_receive_slots[idx].instance == instance) {
+            return &hid_receive_slots[idx];
+        }
+    }
+
+    for (uint8_t idx = 0; idx < CFG_TUH_HID; idx++) {
+        if (hid_receive_slots[idx].dev_addr == 0) {
+            hid_receive_slots[idx].dev_addr = dev_addr;
+            hid_receive_slots[idx].instance = instance;
+            return &hid_receive_slots[idx];
+        }
+    }
+
+    return NULL;
+}
+
+static void hid_receive_request(uint8_t dev_addr, uint8_t instance) {
+    hid_receive_slot_t *slot = hid_receive_slot_get(dev_addr, instance);
+
+    if (slot != NULL) {
+        slot->pending = true;
+    }
+}
+
+static void hid_receive_cancel(uint8_t dev_addr, uint8_t instance) {
+    for (uint8_t idx = 0; idx < CFG_TUH_HID; idx++) {
+        if (hid_receive_slots[idx].dev_addr == dev_addr && hid_receive_slots[idx].instance == instance) {
+            hid_receive_slots[idx] = (hid_receive_slot_t){0};
+            return;
+        }
+    }
+}
+
+void kqm_hid_receive_task(void) {
+    for (uint8_t idx = 0; idx < CFG_TUH_HID; idx++) {
+        hid_receive_slot_t *slot = &hid_receive_slots[idx];
+
+        if (!slot->pending) {
+            continue;
+        }
+
+        if (tuh_hid_receive_ready(slot->dev_addr, slot->instance) &&
+            tuh_hid_receive_report(slot->dev_addr, slot->instance)) {
+            slot->pending = false;
+        }
+    }
 }
 
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
@@ -124,11 +183,12 @@ void tuh_mount_cb(uint8_t dev_addr) {
 void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_report, uint16_t desc_len) {
     dprintf("HID is mounted:%d:%d\n", dev_addr, instance);
     parse_report_descriptor((dev_addr * 16) + instance, desc_report, desc_len);
-    tuh_hid_receive_report(dev_addr, instance);
+    hid_receive_request(dev_addr, instance);
 }
 
 void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance) {
     dprintf("HID unmounted:%d:%d\n", dev_addr, instance);
+    hid_receive_cancel(dev_addr, instance);
     memset(pre_keyreport, 0, sizeof(pre_keyreport));
     hid_disconnect_flag = true;
     kbd_addr            = 0;
@@ -155,7 +215,7 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
         hid_report_size = len;
     }
 
-    tuh_hid_receive_report(dev_addr, instance);
+    hid_receive_request(dev_addr, instance);
 }
 
 __attribute__((weak)) void keyboard_report_hook(keyboard_parse_result_t const* report) {

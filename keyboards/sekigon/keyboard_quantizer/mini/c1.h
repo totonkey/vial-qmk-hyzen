@@ -8,3 +8,4 @@ void c1_usbh(void);
 void c1_start_timer(void);
 void c1_before_flash_operation(void);
 void c1_after_flash_operation(void);
+void kqm_hid_receive_task(void);

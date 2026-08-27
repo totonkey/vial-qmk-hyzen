@@ -26,4 +26,5 @@ void c1_usbh(void) {
 // USB host stack main task
 void c1_main_task(void) {
     tuh_task();
+    kqm_hid_receive_task();
 }
