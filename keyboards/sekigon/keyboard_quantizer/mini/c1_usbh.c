@@ -7,7 +7,8 @@
 #include "pio_usb_ll.h"
 #include "hardware/sync.h"
 #include "host/hcd.h"
-#include "pico/time.h"
+
+extern uint64_t time_us_64(void);
 
 // dummy implementation
 void alarm_pool_add_repeating_timer_us(void) {}
