@@ -30,12 +30,31 @@ static void c1_soft_reconnect_usb_host(void) {
     hcd_event_device_remove(1, false);
 }
 
+static bool c1_usb_host_has_mounted_device(void) {
+    for (uint8_t dev_addr = 1; dev_addr <= CFG_TUH_DEVICE_MAX; dev_addr++) {
+        if (tuh_mounted(dev_addr)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static void c1_usb_host_reconnect_task(void) {
     if (!reconnect_requested) {
         return;
     }
 
+    // Consume the request once. Do not carry a startup wake request forward
+    // until a keyboard is connected later.
     reconnect_requested = false;
+
+    // QMK can call the wake hook during startup. Reconnect only when TinyUSB
+    // has already completed mounting a downstream USB device.
+    if (!c1_usb_host_has_mounted_device()) {
+        return;
+    }
+
     c1_soft_reconnect_usb_host();
 }
 
