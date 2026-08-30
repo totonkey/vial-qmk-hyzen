@@ -8,28 +8,14 @@
 #include "hardware/sync.h"
 #include "host/hcd.h"
 
-extern uint64_t time_us_64(void);
-
 // dummy implementation
 void alarm_pool_add_repeating_timer_us(void) {}
 void alarm_pool_create(void) {}
 
-// Temporary validation: perform one software-only downstream USB
-// re-enumeration two seconds after the first device mount.
-#define KQM_USB_HOST_RECONNECT_TEST_DELAY_US 2000000ULL
+static volatile bool reconnect_requested;
 
-static bool     reconnect_test_armed;
-static bool     reconnect_test_done;
-static uint64_t reconnect_test_started_at;
-
-static bool c1_usb_host_has_mounted_device(void) {
-    for (uint8_t dev_addr = 1; dev_addr <= CFG_TUH_DEVICE_MAX; dev_addr++) {
-        if (tuh_mounted(dev_addr)) {
-            return true;
-        }
-    }
-
-    return false;
+void c1_request_usb_host_reconnect(void) {
+    reconnect_requested = true;
 }
 
 static void c1_soft_reconnect_usb_host(void) {
@@ -39,38 +25,19 @@ static void c1_soft_reconnect_usb_host(void) {
         return;
     }
 
-    // Queue a normal TinyUSB removal event, then let the next USB frame
-    // detect the still-connected physical device and enumerate it again.
     root->connected = false;
     root->suspended = true;
     hcd_event_device_remove(1, false);
 }
 
-static void c1_usb_host_reconnect_test_task(void) {
-    if (reconnect_test_done) {
+static void c1_usb_host_reconnect_task(void) {
+    if (!reconnect_requested) {
         return;
     }
 
-    if (!c1_usb_host_has_mounted_device()) {
-        reconnect_test_armed = false;
-        return;
-    }
-
-    if (!reconnect_test_armed) {
-        reconnect_test_armed      = true;
-        reconnect_test_started_at = time_us_64();
-        return;
-    }
-
-    if (time_us_64() - reconnect_test_started_at <
-        KQM_USB_HOST_RECONNECT_TEST_DELAY_US) {
-        return;
-    }
-
-    reconnect_test_done = true;
+    reconnect_requested = false;
     c1_soft_reconnect_usb_host();
 }
-
 
 // Initialize USB host stack on core1
 void c1_usbh(void) {
@@ -86,7 +53,7 @@ void c1_usbh(void) {
 
 // USB host stack main task
 void c1_main_task(void) {
+    c1_usb_host_reconnect_task();
     tuh_task();
     kqm_hid_receive_task();
-    c1_usb_host_reconnect_test_task();
 }

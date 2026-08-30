@@ -40,6 +40,7 @@ void suspend_power_down_kb(void) {
 }
 
 void suspend_wakeup_init_kb(void) {
+    c1_request_usb_host_reconnect();
     kqm_set_suspend_led(false);
     suspend_wakeup_init_user();
 }
